@@ -106,7 +106,24 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], all
 
 @app.get("/start/{subject}")
 def start_test(subject: str):
-    # ... твой существующий код ...
+    source = []
+    if subject == "mix":
+        for s in DATA_FILES.keys():
+            if all_questions[s]:
+                source.extend(random.sample(all_questions[s], min(len(all_questions[s]), 10)))
+        random.shuffle(source)
+    else:
+        if subject not in all_questions:
+            raise HTTPException(status_code=404, detail="Subject not found")
+        source = random.sample(all_questions[subject], min(len(all_questions[subject]), 10))
+    
+    # Клонируем и подменяем ID на уникальный real_id, скрываем правильный ответ
+    output = []
+    for q in source:
+        q_copy = copy.deepcopy(q)
+        q_copy["id"] = q_copy["real_id"] # Фронтенд будет работать с уникальной строкой
+        q_copy.pop("correct", None)
+        output.append(q_copy)
     return {"status": "ok", "message": "API работает вместе с ботом"}
 
 # --- ЗАПУСК ВСЕГО ВМЕСТЕ ---
@@ -119,3 +136,4 @@ if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
+
