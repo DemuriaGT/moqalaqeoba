@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 import json
 import random
 import copy
@@ -96,6 +97,11 @@ def submit_test(subject: str, payload: dict):
 
     return {"score": score, "total": len(user_answers), "mistakes": mistakes, "stats": stats}
 
+@app.get("/")
+def read_index():
+    return FileResponse("static/index.html")
+    
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8000)
