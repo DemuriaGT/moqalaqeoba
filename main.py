@@ -104,6 +104,14 @@ async def handle_answer(poll_answer: types.PollAnswer, state: FSMContext):
 # --- ЛОГИКА FASTAPI (ТВОЙ КОД) ---
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
+@app.get("/")
+async def root():
+    return {
+        "status": "working",
+        "message": "Система тестирования (Сайт + Бот) запущена!",
+        "bot_username": "@твой_юзернейм_бота"
+    }
+    
 @app.get("/start/{subject}")
 def start_test(subject: str):
     source = []
@@ -136,4 +144,5 @@ if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
+
 
