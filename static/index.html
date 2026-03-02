@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+    <meta charset="UTF-8">
+    <title>Citizenship Test GE</title>
+    <style>
+        :root { --bg-color: #f4f7f6; --card-bg: #ffffff; --text-color: #333333; --border-color: #eeeeee; --accent-color: #28a745; --danger-color: #dc3545; }
+        body.dark-mode { --bg-color: #121212; --card-bg: #1e1e1e; --text-color: #e0e0e0; --border-color: #333333; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-color); color: var(--text-color); max-width: 800px; margin: 40px auto; padding: 20px; transition: 0.3s; }
+        .card { background: var(--card-bg); padding: 40px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); position: relative; }
+        
+        .header-buttons { position: absolute; top: 20px; right: 20px; display: flex; gap: 10px; }
+        .icon-btn { background: none; border: 1px solid var(--border-color); border-radius: 8px; font-size: 1.1em; cursor: pointer; padding: 5px 10px; color: var(--text-color); transition: 0.2s; }
+        .icon-btn:hover { border-color: var(--accent-color); }
+
+        .menu-grid { display: grid; grid-template-columns: 1fr; gap: 15px; margin-top: 30px; }
+        .menu-btn { padding: 20px; font-size: 1.1em; border: 2px solid var(--border-color); background: var(--card-bg); color: var(--text-color); border-radius: 12px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; }
+        .menu-btn:hover { border-color: var(--accent-color); background: rgba(40, 167, 69, 0.05); }
+        .exam-btn { border-color: var(--accent-color); font-weight: bold; background: rgba(40, 167, 69, 0.1); margin-top: 10px; }
+        
+        .question-text { font-size: 1.25em; font-weight: 600; margin-bottom: 25px; white-space: pre-line; line-height: 1.5; }
+        .option { display: block; padding: 15px; margin: 10px 0; border: 1px solid var(--border-color); border-radius: 10px; cursor: pointer; transition: 0.2s; }
+        .option:hover { background: rgba(40, 167, 69, 0.05); border-color: var(--accent-color); }
+        
+        .controls { display: flex; justify-content: space-between; align-items: center; margin-top: 30px; border-top: 1px solid var(--border-color); padding-top: 20px; }
+        .nav-group { display: flex; gap: 10px; }
+        button { padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; border: none; }
+        .primary { background: var(--accent-color); color: white; }
+        .secondary { background: #6c757d; color: white; }
+        .outline { background: transparent; border: 1px solid var(--border-color); color: var(--text-color); }
+        
+        .mistake-card { border-left: 4px solid var(--danger-color); padding: 15px; margin: 15px 0; background: rgba(220, 53, 69, 0.05); border-radius: 8px; }
+        .stat-badge { display: inline-block; padding: 5px 12px; border-radius: 20px; font-size: 0.85em; background: var(--border-color); margin: 5px; }
+        .description-text { text-align: center; opacity: 0.8; line-height: 1.6; margin-bottom: 30px; font-size: 0.95em; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div class="header-buttons">
+        <button id="lang-btn" class="icon-btn" onclick="toggleLang()">EN</button>
+        <button id="theme-btn" class="icon-btn" onclick="toggleTheme()">☀️</button>
+    </div>
+
+    <div id="menu-screen">
+        <h1 id="ui-main-title" style="text-align:center; margin-bottom: 10px;">Тесты на гражданство</h1>
+        <p id="ui-description" class="description-text"></p>
+        
+        <div class="menu-grid">
+            <button class="menu-btn" onclick="startTest('history')"><span id="ui-btn-history">📜 История Грузии</span> <span>❯</span></button>
+            <button class="menu-btn" onclick="startTest('law')"><span id="ui-btn-law">⚖️ Основы права</span> <span>❯</span></button>
+            <button class="menu-btn" onclick="startTest('language')"><span id="ui-btn-lang">🇬🇪 Грузинский язык</span> <span>❯</span></button>
+            <button class="menu-btn" onclick="startTest('mix')"><span id="ui-btn-exam">🎓 ПОЛНЫЙ ЭКЗАМЕН</span> <span>❯</span></button>
+        </div>
+    </div>
+
+    <div id="test-screen" style="display:none">
+        <div id="progress" style="color:var(--accent-color); font-weight:bold; margin-bottom:10px"></div>
+        <div id="question-container"></div>
+        <div class="controls">
+            <button class="outline" id="ui-back-menu" onclick="backToMenu()">🏠 В меню</button>
+            <div class="nav-group">
+                <button class="secondary" id="ui-prev" onclick="prevQuestion()">Назад</button>
+                <button class="primary" id="ui-next" onclick="nextQuestion()">Далее</button>
+                <button class="primary" id="ui-submit" onclick="submitTest()" style="display:none">Завершить</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="result-screen" style="display:none">
+        <div id="result-summary" style="text-align:center"></div>
+        <div id="mistakes-list"></div>
+        <button class="primary" id="ui-final-menu" style="width:100%; margin-top:20px; padding: 15px;" onclick="location.reload()">Вернуться в меню</button>
+    </div>
+</div>
+
+<script>
+    const translations = {
+        ru: {
+            main_title: "Тесты на гражданство",
+            description: "В каждой теме по 10 вопросов.\nВ полном экзамене 30 вопросов, без ограничений по времени.",
+            btn_exam: "🎓 ПОЛНЫЙ ЭКЗАМЕН",
+            btn_history: "📜 История Грузии",
+            btn_law: "⚖️ Основы права",
+            btn_lang: "🗣️ Грузинский язык",
+            back_menu: "🏠 В меню",
+            prev: "Назад",
+            next: "Далее",
+            submit: "Завершить",
+            final_menu: "Вернуться в главное меню",
+            confirm_exit: "Прервать тест? Прогресс будет потерян.",
+            select_warning: "Пожалуйста, выберите вариант ответа!", // Новая строка
+            q_count: "Вопрос",
+            q_of: "из",
+            results: "Ваш результат",
+            pass: "🎉 Успешно!",
+            fail: "📖 Нужно подучить",
+            mistakes_title: "Разбор ошибок:",
+            no_mistakes: "Идеально! Ошибок нет.",
+            your_ans: "Ваш ответ",
+            correct_ans: "Правильно",
+            subjects: { history: "История", law: "Право", language: "Язык", mix: "Экзамен" }
+        },
+        en: {
+            main_title: "Citizenship Tests",
+            description: "Each topic contains 10 questions.\nFull exam has 30 questions, no time limits.",
+            btn_exam: "🎓 FULL EXAM",
+            btn_history: "📜 History of Georgia",
+            btn_law: "⚖️ Basics of Law",
+            btn_lang: "🗣️ Georgian Language",
+            back_menu: "🏠 To Menu",
+            prev: "Back",
+            next: "Next",
+            submit: "Finish",
+            final_menu: "Back to Main Menu",
+            confirm_exit: "Cancel test? Progress will be lost.",
+            select_warning: "Please select an answer!", // Новая строка
+            q_count: "Question",
+            q_of: "of",
+            results: "Your Result",
+            pass: "🎉 Success!",
+            fail: "📖 Keep practicing",
+            mistakes_title: "Review Mistakes:",
+            no_mistakes: "Perfect! No mistakes.",
+            your_ans: "Your answer",
+            correct_ans: "Correct",
+            subjects: { history: "History", law: "Law", language: "Language", mix: "Exam" }
+        }
+    };
+
+    let currentLang = localStorage.getItem('lang') || 'ru';
+    let questions = [], currentIdx = 0, userAnswers = {}, currentSubject = '';
+
+    function updateUI() {
+        const t = translations[currentLang];
+        document.getElementById('lang-btn').innerText = currentLang === 'ru' ? 'EN' : 'RU';
+        document.getElementById('ui-main-title').innerText = t.main_title;
+        document.getElementById('ui-description').innerText = t.description;
+        document.getElementById('ui-btn-exam').innerText = t.btn_exam;
+        document.getElementById('ui-btn-history').innerText = t.btn_history;
+        document.getElementById('ui-btn-law').innerText = t.btn_law;
+        document.getElementById('ui-btn-lang').innerText = t.btn_lang;
+        document.getElementById('ui-back-menu').innerText = t.back_menu;
+        document.getElementById('ui-prev').innerText = t.prev;
+        document.getElementById('ui-next').innerText = t.next;
+        document.getElementById('ui-submit').innerText = t.submit;
+        document.getElementById('ui-final-menu').innerText = t.final_menu;
+    }
+
+    function toggleLang() {
+        currentLang = currentLang === 'ru' ? 'en' : 'ru';
+        localStorage.setItem('lang', currentLang);
+        updateUI();
+        if (questions.length > 0) renderQuestion();
+    }
+
+    function toggleTheme() {
+        const isDark = document.body.classList.toggle('dark-mode');
+        document.getElementById('theme-btn').innerText = isDark ? '☀️' : '🌙';
+        localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    }
+
+    if (localStorage.getItem('theme') === 'dark') {
+        document.body.classList.add('dark-mode');
+        document.getElementById('theme-btn').innerText = '☀️';
+    }
+
+    async function startTest(subject) {
+        currentSubject = subject;
+        const res = await fetch(`/start/${subject}`);
+        questions = await res.json();
+        currentIdx = 0; userAnswers = {};
+        document.getElementById('menu-screen').style.display = 'none';
+        document.getElementById('test-screen').style.display = 'block';
+        document.getElementById('result-screen').style.display = 'none';
+        renderQuestion();
+    }
+
+    function renderQuestion() {
+        const q = questions[currentIdx];
+        const t = translations[currentLang];
+        document.getElementById('progress').innerText = `${t.subjects[currentSubject]} | ${t.q_count} ${currentIdx + 1} ${t.q_of} ${questions.length}`;
+        const container = document.getElementById('question-container');
+        container.innerHTML = `<div class="question-text">${q.question}</div>`;
+        
+        Object.keys(q.options).sort().forEach(key => {
+            const checked = userAnswers[q.id] === key ? 'checked' : '';
+            container.innerHTML += `
+                <label class="option">
+                    <input type="radio" name="q" value="${key}" ${checked} onchange="userAnswers['${q.id}']='${key}'">
+                    <strong>${key})</strong> ${q.options[key]}
+                </label>`;
+        });
+
+        document.getElementById('ui-prev').style.visibility = currentIdx === 0 ? 'hidden' : 'visible';
+        document.getElementById('ui-next').style.display = currentIdx === questions.length - 1 ? 'none' : 'block';
+        document.getElementById('ui-submit').style.display = currentIdx === questions.length - 1 ? 'block' : 'none';
+    }
+
+    // ИСПРАВЛЕННАЯ ФУНКЦИЯ
+    function nextQuestion() { 
+        const currentQid = questions[currentIdx].id;
+        if (!userAnswers[currentQid]) {
+            alert(translations[currentLang].select_warning);
+            return;
+        }
+        currentIdx++; 
+        renderQuestion(); 
+    }
+
+    function prevQuestion() { currentIdx--; renderQuestion(); }
+    function backToMenu() { if(confirm(translations[currentLang].confirm_exit)) location.reload(); }
+
+    // ИСПРАВЛЕННАЯ ФУНКЦИЯ
+    async function submitTest() {
+        const currentQid = questions[currentIdx].id;
+        if (!userAnswers[currentQid]) {
+            alert(translations[currentLang].select_warning);
+            return;
+        }
+
+        const res = await fetch(`/submit/${currentSubject}`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ answers: userAnswers })
+        });
+        const data = await res.json();
+        const t = translations[currentLang];
+        
+        document.getElementById('test-screen').style.display = 'none';
+        document.getElementById('result-screen').style.display = 'block';
+        
+        let statsHtml = '';
+        if (currentSubject === 'mix') {
+            statsHtml = `<div style="margin: 20px 0;">
+                <span class="stat-badge">📜 ${t.subjects.history}: ${data.stats.history}/10</span>
+                <span class="stat-badge">⚖️ ${t.subjects.law}: ${data.stats.law}/10</span>
+                <span class="stat-badge">🇬🇪 ${t.subjects.language}: ${data.stats.language}/10</span>
+            </div>`;
+        }
+
+        document.getElementById('result-summary').innerHTML = `
+            <h1 style="font-size: 3em; margin-bottom:0;">${data.score} / ${data.total}</h1>
+            <p>${data.score >= (data.total * 0.8) ? t.pass : t.fail}</p>
+            ${statsHtml}
+        `;
+        
+        const list = document.getElementById('mistakes-list');
+        list.innerHTML = data.mistakes.length > 0 ? `<h3>${t.mistakes_title}</h3>` : `<h3>${t.no_mistakes}</h3>`;
+        
+        data.mistakes.forEach(m => {
+            list.innerHTML += `<div class="mistake-card">
+                <small style="opacity:0.5">${t.subjects[m.subject] || ''}</small>
+                <p><b>${m.question}</b></p>
+                <p style="color:var(--danger-color)">✘ ${t.your_ans}: ${m.options[m.your_answer] || '—'}</p>
+                <p style="color:var(--accent-color)">✔ ${t.correct_ans}: ${m.options[m.correct_answer]}</p>
+            </div>`;
+        });
+        window.scrollTo(0, 0);
+    }
+
+    updateUI();
+</script>
+</body>
+</html>
