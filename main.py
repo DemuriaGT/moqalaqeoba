@@ -15,7 +15,9 @@ from aiogram.fsm.state import State, StatesGroup
 
 # --- НАСТРОЙКИ ---
 # Рекомендую в Render добавить переменную BOT_TOKEN, но если нет — вставь токен сюда
-TOKEN = os.getenv("BOT_TOKEN", "8269266664:AAGEt3cEHfQxRrgQthPAp_PVUmGr_rCrt6w")
+TOKEN = os.getenv("BOT_TOKEN")
+if not TOKEN:
+    print("❌ ОШИБКА: Переменная BOT_TOKEN не найдена в окружении!")
 
 app = FastAPI()
 bot = Bot(token=TOKEN)
@@ -208,3 +210,4 @@ if __name__ == "__main__":
     # Render сам подставит нужный порт
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
+
