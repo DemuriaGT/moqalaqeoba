@@ -14,7 +14,6 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 
 # --- НАСТРОЙКИ ---
-# Рекомендую в Render добавить переменную BOT_TOKEN, но если нет — вставь токен сюда
 TOKEN = os.getenv("BOT_TOKEN")
 if not TOKEN:
     print("❌ ОШИБКА: Переменная BOT_TOKEN не найдена в окружении!")
@@ -126,7 +125,7 @@ async def send_next_question(user_id: int, state: FSMContext):
 
         await bot.send_poll(
             chat_id=user_id,
-            question=f"Выберите ответ (Вопрос {idx+1}):" if max_opt_len > 100 else f"[{idx+1}/{len(questions)}] {q['question']}"[:300],
+            question=f"Выберите ответ (Вопрос {idx+1}):" if max_opt_len > 100 else f"[{idx+1}/{len(questions)}] {q['question']}"[:750],
             options=poll_opts,
             type='quiz',
             correct_option_id=correct_id,
@@ -210,4 +209,5 @@ if __name__ == "__main__":
     # Render сам подставит нужный порт
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
+
 
