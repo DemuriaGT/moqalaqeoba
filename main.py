@@ -125,7 +125,7 @@ async def send_next_question(user_id: int, state: FSMContext):
 
         await bot.send_poll(
             chat_id=user_id,
-            question=f"Выберите ответ (Вопрос {idx+1}):" if max_opt_len > 100 else f"[{idx+1}/{len(questions)}] {q['question']}"[:750],
+            question=f"Выберите ответ (Вопрос {idx+1}):" if max_opt_len > 100 else f"[{idx+1}/{len(questions)}] {q['question']}"[:300],
             options=poll_opts,
             type='quiz',
             correct_option_id=correct_id,
@@ -209,5 +209,6 @@ if __name__ == "__main__":
     # Render сам подставит нужный порт
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
+
 
 
