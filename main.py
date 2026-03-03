@@ -112,20 +112,33 @@ async def send_next_question(user_id: int, state: FSMContext):
         raw_options = q["options"]
         options_list = list(raw_options.values())
         correct_id = letter_to_index[q["correct"]]
+        
+        # РАСШИРЕННАЯ ПРОВЕРКА ДЛИНЫ
         max_opt_len = max(len(opt) for opt in options_list)
+        question_text_len = len(q['question'])
 
-        if max_opt_len > 100:
+        # Если хоть один ответ > 100 символов ИЛИ сам вопрос > 250 символов
+        if max_opt_len > 100 or question_text_len > 250:
+            # Формируем полный текст вопроса с вариантами в одном сообщении
             full_text = f"<b>Вопрос {idx+1}/{len(questions)}:</b>\n{q['question']}\n\n"
             for L, txt in raw_options.items():
                 full_text += f"<b>{L}:</b> {txt}\n"
+            
+            # Отправляем текстовое сообщение (лимит 4096 символов)
             await bot.send_message(user_id, full_text, parse_mode='HTML', reply_markup=cancel_kb())
+            
+            # В самом опросе оставляем только короткую заглушку
             poll_opts = [f"Вариант {L}" for L in raw_options.keys()]
+            display_question = f"Выберите правильный вариант (Вопрос {idx+1}):"
         else:
+            # Если всё короткое — отправляем стандартный опрос
             poll_opts = options_list
+            display_question = f"[{idx+1}/{len(questions)}] {q['question']}"
 
         await bot.send_poll(
             chat_id=user_id,
-            question=f"Выберите ответ (Вопрос {idx+1}):" if max_opt_len > 100 else f"[{idx+1}/{len(questions)}] {q['question']}"[:300],
+            # Ограничиваем заголовок опроса 300 символами (жесткий лимит Telegram)
+            question=display_question[:300],
             options=poll_opts,
             type='quiz',
             correct_option_id=correct_id,
@@ -195,7 +208,13 @@ def submit_test(subject: str, payload: dict):
                 score += 1
                 stats[orig["subject_key"]] += 1
             else:
-                mistakes.append({"question": orig["question"], "your_answer": ans, "correct_answer": orig["correct"], "options": orig["options"], "subject": orig["subject_key"]})
+                mistakes.append({
+                    "question": orig["question"], 
+                    "your_answer": ans, 
+                    "correct_answer": orig["correct"], 
+                    "options": orig["options"], 
+                    "subject": orig["subject_key"]
+                })
     return {"score": score, "total": len(user_answers), "mistakes": mistakes, "stats": stats}
 
 # --- ЗАПУСК ---
@@ -206,9 +225,5 @@ async def on_startup():
 
 if __name__ == "__main__":
     import uvicorn
-    # Render сам подставит нужный порт
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
-
-
-
